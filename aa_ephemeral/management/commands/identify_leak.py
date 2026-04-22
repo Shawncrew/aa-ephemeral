@@ -3,7 +3,7 @@ from django.core.management.base import BaseCommand
 from allianceauth.services.modules.discord.models import DiscordUser
 
 from aa_ephemeral.models import FleetPing
-from aa_ephemeral.watermark import decode_invisible, generate_watermark
+from aa_ephemeral.watermark import decode_invisible, generate_visible_code, generate_watermark
 
 
 class Command(BaseCommand):
@@ -16,13 +16,13 @@ class Command(BaseCommand):
             type=str,
             nargs="?",
             default=None,
-            help="Paste the full leaked message text to decode the invisible watermark (optional)",
+            help="Paste the full leaked message text to decode the invisible watermark",
         )
         parser.add_argument(
             "--code",
             type=str,
             default=None,
-            help="Visible msgid code to look up instead (e.g. A3F2B1C4)",
+            help="The 6-digit code visible at the end of the timestamp (e.g. 125208)",
         )
 
     def handle(self, *args, **options):
@@ -38,32 +38,38 @@ class Command(BaseCommand):
 
         self.stdout.write(f"Checking ping sent by {ping.posted_by_name}...")
 
-        # Try invisible watermark first if text was pasted
-        code = None
+        # Try invisible watermark from pasted text first
+        invisible_code = None
         if pasted_text:
-            code = decode_invisible(pasted_text)
-            if code:
-                self.stdout.write(f"Invisible watermark decoded: {code}")
+            invisible_code = decode_invisible(pasted_text)
+            if invisible_code:
+                self.stdout.write(f"Invisible watermark decoded: {invisible_code}")
             else:
                 self.stdout.write(self.style.WARNING("No invisible watermark found in pasted text."))
 
-        # Fall back to visible code
-        if not code and visible_code:
-            code = visible_code.upper()
+        all_discord_users = DiscordUser.objects.all()
 
-        if not code:
-            self.stderr.write("Provide either pasted text or --code to identify the leak.")
-            return
+        # Match on invisible watermark
+        if invisible_code:
+            for discord_user in all_discord_users:
+                if generate_watermark(discord_user.uid, message_id) == invisible_code:
+                    self._print_match(discord_user)
+                    return
 
-        for discord_user in DiscordUser.objects.all():
-            if generate_watermark(discord_user.uid, message_id) == code:
-                user = discord_user.user
-                self.stdout.write(
-                    self.style.ERROR(
-                        f"MATCH FOUND: Discord UID {discord_user.uid} — "
-                        f"Auth user: {user.username} ({user.email})"
-                    )
-                )
-                return
+        # Match on visible 6-digit code
+        if visible_code:
+            for discord_user in all_discord_users:
+                if generate_visible_code(discord_user.uid, message_id) == visible_code.zfill(6):
+                    self._print_match(discord_user)
+                    return
 
-        self.stdout.write(self.style.WARNING("No match found for that code."))
+        self.stdout.write(self.style.WARNING("No match found."))
+
+    def _print_match(self, discord_user):
+        user = discord_user.user
+        self.stdout.write(
+            self.style.ERROR(
+                f"MATCH FOUND: Discord UID {discord_user.uid} — "
+                f"Auth user: {user.username} ({user.email})"
+            )
+        )

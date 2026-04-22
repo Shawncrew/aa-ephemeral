@@ -41,7 +41,7 @@ Posts a public `@everyone` embed in `#channel` with an **Open** button. Only use
 
 Each ephemeral reveal contains:
 - The secret message text (with an invisible watermark unique to the recipient)
-- `Sent by: <FC name> — <visible msgid code>`
+- `Sent by: <FC name> at 2026-04-22 04:10:00125208` — the trailing 6 digits are a unique identifier for the recipient, disguised as a sub-second timestamp component
 
 ## Leak Identification
 
@@ -61,10 +61,10 @@ docker compose exec allianceauth_gunicorn python manage.py identify_leak <messag
 
 ### Identifying a leak from a screenshot
 
-If only a screenshot is available, use the visible msgid code:
+If only a screenshot is available, use the 6-digit code at the end of the timestamp:
 
 ```bash
-docker compose exec allianceauth_gunicorn python manage.py identify_leak <message_id> --code A3F2B1C4
+docker compose exec allianceauth_gunicorn python manage.py identify_leak <message_id> --code 125208
 ```
 
 Both commands output the matching Auth username and email address.

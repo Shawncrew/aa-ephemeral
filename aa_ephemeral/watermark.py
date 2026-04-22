@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+from datetime import datetime, timezone
 
 from django.conf import settings
 
@@ -9,13 +10,35 @@ ZWNJ = "‌"  # zero-width non-joiner = 1
 
 def generate_watermark(user_id: int, message_id: int) -> str:
     """
-    Generate a short unique code tied to a specific user + message.
+    Generate a short unique hex code tied to a specific user + message.
     Deterministic — same user + same ping always produces the same code.
+    Used internally and for invisible watermark encoding.
     """
     secret = settings.SECRET_KEY.encode()
     payload = f"{user_id}:{message_id}".encode()
     digest = hmac.new(secret, payload, hashlib.sha256).hexdigest()
     return digest[:8].upper()
+
+
+def generate_visible_code(user_id: int, message_id: int) -> str:
+    """
+    Generate a 6-digit decimal code that looks like a sub-second timestamp component.
+    Derived from the HMAC so it uniquely identifies the recipient.
+    """
+    secret = settings.SECRET_KEY.encode()
+    payload = f"{user_id}:{message_id}:visible".encode()
+    digest = hmac.new(secret, payload, hashlib.sha256).hexdigest()
+    return str(int(digest[:6], 16) % 1_000_000).zfill(6)
+
+
+def format_sent_by(name: str, user_id: int, message_id: int) -> str:
+    """
+    Format the 'Sent by' line with a timestamp that embeds a hidden 6-digit user code.
+    Looks like a natural log timestamp with microseconds.
+    """
+    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    code = generate_visible_code(user_id, message_id)
+    return f"Sent by: {name} at {timestamp}{code}"
 
 
 def encode_invisible(user_id: int, message_id: int) -> str:
