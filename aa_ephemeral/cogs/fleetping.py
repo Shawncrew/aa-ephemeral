@@ -24,7 +24,7 @@ class RevealView(discord.ui.View):
         self.message_id = message_id
 
         button = discord.ui.Button(
-            label="Click to Reveal",
+            label="Open",
             style=discord.ButtonStyle.danger,
             emoji="🔒",
             custom_id=f"{REVEAL_BUTTON_PREFIX}{message_id}",
@@ -35,14 +35,14 @@ class RevealView(discord.ui.View):
     async def reveal(self, interaction: discord.Interaction):
         try:
             ping = FleetPing.objects.get(message_id=self.message_id)
-            secret = ping.secret
+            content = f"{ping.secret}\n\nSent by: {ping.posted_by_name}"
         except FleetPing.DoesNotExist:
-            secret = "Fleet ping details are no longer available."
+            content = "Fleet ping details are no longer available."
         except Exception as e:
             logger.error(f"FleetPing lookup failed for message {self.message_id}: {e}")
-            secret = "Something went wrong retrieving the fleet details."
+            content = "Something went wrong retrieving the fleet details."
 
-        await interaction.response.send_message(secret, ephemeral=True)
+        await interaction.response.send_message(content, ephemeral=True)
 
 
 class FleetPingCog(commands.Cog):
@@ -77,22 +77,25 @@ class FleetPingCog(commands.Cog):
     ):
         embed = discord.Embed(
             title="🔒 Hidden Fleet Ping",
-            description="Click the button below to reveal the fleet details.",
+            description="Click Open to view Message!",
             color=discord.Color.red(),
         )
-        embed.set_footer(text=f"Posted by {ctx.author.display_name}")
 
-        # Post with a placeholder message_id=0; we need the sent message ID first
-        sent = await channel.send(embed=embed, view=RevealView(message_id=0))
+        # Post the @everyone mention as content, embed as the body
+        sent = await channel.send(
+            content="@everyone",
+            embed=embed,
+            view=RevealView(message_id=0),
+            allowed_mentions=discord.AllowedMentions(everyone=True),
+        )
 
-        # Persist the secret keyed by the real Discord message ID
         FleetPing.objects.create(
             message_id=sent.id,
             secret=message,
             posted_by=ctx.author.id,
+            posted_by_name=ctx.author.display_name,
         )
 
-        # Edit the message so the button's custom_id reflects the real message ID
         final_view = RevealView(message_id=sent.id)
         await sent.edit(view=final_view)
         self.bot.add_view(final_view, message_id=sent.id)

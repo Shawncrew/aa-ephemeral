@@ -7,6 +7,7 @@ class FleetPing(models.Model):
     message_id = models.BigIntegerField(primary_key=True, help_text="Discord message ID of the ping embed")
     secret = models.TextField(help_text="Secret fleet details revealed on button click")
     posted_by = models.BigIntegerField(help_text="Discord user ID of the FC who posted the ping")
+    posted_by_name = models.CharField(max_length=100, default="", help_text="Display name of the FC who posted the ping")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
