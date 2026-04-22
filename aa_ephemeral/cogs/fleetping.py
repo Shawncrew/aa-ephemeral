@@ -6,6 +6,7 @@ from discord.ext import commands
 from aadiscordbot.cogs.utils.decorators import sender_has_perm
 
 from aa_ephemeral.models import FleetPing
+from aa_ephemeral.watermark import generate_watermark, inject_watermark
 
 logger = logging.getLogger(__name__)
 
@@ -35,7 +36,9 @@ class RevealView(discord.ui.View):
     async def reveal(self, interaction: discord.Interaction):
         try:
             ping = FleetPing.objects.get(message_id=self.message_id)
-            content = f"{ping.secret}\n\nSent by: {ping.posted_by_name}"
+            watermark = generate_watermark(interaction.user.id, self.message_id)
+            watermarked_secret = inject_watermark(ping.secret, interaction.user.id, self.message_id)
+            content = f"{watermarked_secret}\n\nSent by: {ping.posted_by_name} — {watermark}"
         except FleetPing.DoesNotExist:
             content = "Fleet ping details are no longer available."
         except Exception as e:

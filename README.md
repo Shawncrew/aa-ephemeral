@@ -28,3 +28,43 @@ Run migrations:
 ```bash
 python manage.py migrate aa_ephemeral
 ```
+
+Assign the `aa_ephemeral | Fleet Ping | Can send hidden fleet pings` permission to the Auth group whose members should be able to use `/fleetping`.
+
+## Usage
+
+```
+/fleetping #channel <secret message>
+```
+
+Posts a public `@everyone` embed in `#channel` with an **Open** button. Only users who click the button receive the secret message — ephemerally, visible to them alone.
+
+Each ephemeral reveal contains:
+- The secret message text (with an invisible watermark unique to the recipient)
+- `Sent by: <FC name> — <visible msgid code>`
+
+## Leak Identification
+
+Every ephemeral reveal is watermarked with two layers tied to the recipient's Discord account:
+
+**Invisible watermark** — zero-width Unicode characters embedded silently inside the message text. Survives copy-paste to any platform.
+
+**Visible msgid** — a short code shown at the bottom of the reveal (e.g. `A3F2B1C4`).
+
+### Identifying a leak from copy-pasted text
+
+If a user forwards the message text to another channel, paste it into the management command:
+
+```bash
+docker compose exec allianceauth_gunicorn python manage.py identify_leak <message_id> "pasted message text here"
+```
+
+### Identifying a leak from a screenshot
+
+If only a screenshot is available, use the visible msgid code:
+
+```bash
+docker compose exec allianceauth_gunicorn python manage.py identify_leak <message_id> --code A3F2B1C4
+```
+
+Both commands output the matching Auth username and email address.
