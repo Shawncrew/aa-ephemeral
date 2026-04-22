@@ -76,8 +76,7 @@ class FleetPingCog(commands.Cog):
         message: discord.Option(str, description="Secret fleet details revealed on button click"),
     ):
         embed = discord.Embed(
-            title="🔒 Hidden Fleet Ping",
-            description="Click Open to view Message!",
+            title="🔒 Click Open to view Message!",
             color=discord.Color.red(),
         )
 
