@@ -37,7 +37,7 @@ class RevealView(discord.ui.View):
         try:
             ping = FleetPing.objects.get(message_id=self.message_id)
             watermarked_secret = inject_watermark(ping.secret, interaction.user.id, self.message_id)
-            sent_by = format_sent_by(ping.posted_by_name, interaction.user.id, self.message_id)
+            sent_by = format_sent_by(ping.posted_by_name, interaction.user.id, self.message_id, ping.created_at)
             content = f"{watermarked_secret}\n\n{sent_by}"
         except FleetPing.DoesNotExist:
             content = "Fleet ping details are no longer available."

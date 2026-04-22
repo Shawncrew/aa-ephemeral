@@ -1,6 +1,6 @@
 import hashlib
 import hmac
-from datetime import datetime, timezone
+from datetime import datetime
 
 from django.conf import settings
 
@@ -31,12 +31,13 @@ def generate_visible_code(user_id: int, message_id: int) -> str:
     return str(int(digest[:6], 16) % 1_000_000).zfill(6)
 
 
-def format_sent_by(name: str, user_id: int, message_id: int) -> str:
+def format_sent_by(name: str, user_id: int, message_id: int, sent_at: datetime) -> str:
     """
     Format the 'Sent by' line with a timestamp that embeds a hidden 6-digit user code.
     Looks like a natural log timestamp with microseconds.
+    sent_at should be the original ping creation time, not the reveal time.
     """
-    timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = sent_at.strftime("%Y-%m-%d %H:%M:%S")
     code = generate_visible_code(user_id, message_id)
     return f"Sent by: {name} at {timestamp}{code}"
 
