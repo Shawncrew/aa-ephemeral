@@ -4,7 +4,7 @@ from django.db import migrations
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('aa_ephemeral', '0002_fleetping_permission'),
+        ('aa_ephemeral', '0002_alter_fleetping_options'),
     ]
 
     operations = [
