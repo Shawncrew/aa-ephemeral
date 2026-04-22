@@ -13,6 +13,9 @@ class FleetPing(models.Model):
         default_permissions = ()
         verbose_name = "Fleet Ping"
         verbose_name_plural = "Fleet Pings"
+        permissions = (
+            ("can_send_fleet_ping", "Can send hidden fleet pings"),
+        )
 
     def __str__(self):
         return f"FleetPing {self.message_id}"

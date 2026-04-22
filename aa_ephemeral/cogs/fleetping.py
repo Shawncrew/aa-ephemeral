@@ -3,6 +3,8 @@ import logging
 import discord
 from discord.ext import commands
 
+from aadiscordbot.cogs.utils.decorators import sender_has_perm
+
 from aa_ephemeral.models import FleetPing
 
 logger = logging.getLogger(__name__)
@@ -66,7 +68,7 @@ class FleetPingCog(commands.Cog):
         name="fleetping",
         description="Post a hidden fleet ping. Only users who click the button see the details.",
     )
-    @commands.has_permissions(manage_messages=True)
+    @sender_has_perm("aa_ephemeral.can_send_fleet_ping")
     async def fleetping(
         self,
         ctx,
