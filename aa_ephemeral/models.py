@@ -20,3 +20,21 @@ class FleetPing(models.Model):
 
     def __str__(self):
         return f"FleetPing {self.message_id}"
+
+
+class PingView(models.Model):
+    """Records each unique user who has opened a fleet ping."""
+
+    ping = models.ForeignKey(FleetPing, on_delete=models.CASCADE, related_name="views")
+    user_id = models.BigIntegerField(help_text="Discord user ID of the viewer")
+    user_name = models.CharField(max_length=100, default="", help_text="Display name at time of viewing")
+    first_viewed_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        default_permissions = ()
+        unique_together = ("ping", "user_id")
+        verbose_name = "Ping View"
+        verbose_name_plural = "Ping Views"
+
+    def __str__(self):
+        return f"PingView {self.ping_id} by {self.user_id}"
