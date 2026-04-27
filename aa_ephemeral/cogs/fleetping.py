@@ -141,12 +141,16 @@ class FleetPingCog(commands.Cog):
             await ctx.respond(f"Nobody has opened that ping yet.", ephemeral=True)
             return
 
-        lines = [f"**{v.user_name}** (<@{v.user_id}>)" for v in views]
-        viewer_list = "\n".join(lines)
-        await ctx.respond(
-            f"**{count} user(s)** have opened ping `{mid}` (posted by {ping.posted_by_name}):\n{viewer_list}",
-            ephemeral=True,
+        names = "\n".join(sorted(v.user_name for v in views))
+        if len(names) > 4096:
+            names = names[:4093] + "..."
+        embed = discord.Embed(
+            title=f"Ping `{mid}` — {count} viewer(s)",
+            description=names,
+            color=discord.Color.blurple(),
         )
+        embed.set_footer(text=f"Posted by {ping.posted_by_name}")
+        await ctx.respond(embed=embed, ephemeral=True)
 
 
 def setup(bot):
