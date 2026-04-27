@@ -34,6 +34,7 @@ class RevealView(discord.ui.View):
         self.add_item(button)
 
     async def reveal(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
         try:
             ping = FleetPing.objects.get(message_id=self.message_id)
             watermarked_secret = inject_watermark(ping.secret, interaction.user.id, self.message_id)
@@ -50,7 +51,7 @@ class RevealView(discord.ui.View):
             logger.error(f"FleetPing lookup failed for message {self.message_id}: {e}")
             content = "Something went wrong retrieving the fleet details."
 
-        await interaction.response.send_message(content, ephemeral=True)
+        await interaction.followup.send(content, ephemeral=True)
 
 
 class FleetPingCog(commands.Cog):
