@@ -84,12 +84,13 @@ class FleetPingCog(commands.Cog):
         channel: discord.Option(discord.TextChannel, description="Channel to post the ping in", channel_types=[discord.ChannelType.text]),
         message: discord.Option(str, description="Secret fleet details revealed on button click"),
     ):
+        await ctx.defer(ephemeral=True)
+
         embed = discord.Embed(
             title="🔒 Click Open to view Message!",
             color=discord.Color.red(),
         )
 
-        # Post the @everyone mention as content, embed as the body
         sent = await channel.send(
             content="@everyone",
             embed=embed,
@@ -108,7 +109,7 @@ class FleetPingCog(commands.Cog):
         await sent.edit(view=final_view)
         self.bot.add_view(final_view, message_id=sent.id)
 
-        await ctx.respond(
+        await ctx.followup.send(
             f"Fleet ping posted in {channel.mention}.",
             ephemeral=True,
         )
