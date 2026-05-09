@@ -81,7 +81,7 @@ class FleetPingCog(commands.Cog):
     async def fleetping(
         self,
         ctx,
-        channel: discord.Option(discord.TextChannel, description="Channel to post the ping in"),
+        channel: discord.Option(discord.TextChannel, description="Channel to post the ping in", channel_types=[discord.ChannelType.text]),
         message: discord.Option(str, description="Secret fleet details revealed on button click"),
     ):
         embed = discord.Embed(
